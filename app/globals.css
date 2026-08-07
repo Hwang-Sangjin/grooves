@@ -1,26 +1,27 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* ===== Grooves palette — 유일한 색 정의 지점 ===== */
+  --color-cream: #f5e3c8;
+  --color-ink: #2e2a26;
+  --color-rust: #e0602e;
+  --color-green: #3a5240;
+  --color-butter: #f0e8be;
+  --color-peach: #e9b48f;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Tailwind 기본 색상 비활성화 — 실수로 gray-500 같은 걸 못 쓰게 */
+  --color-*: initial;
+  --color-cream: #f5e3c8;
+  --color-ink: #2e2a26;
+  --color-rust: #e0602e;
+  --color-green: #3a5240;
+  --color-butter: #f0e8be;
+  --color-peach: #e9b48f;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-ink);
 }
