@@ -1,50 +1,68 @@
 @import "tailwindcss";
 
 @theme {
-  /* ===== Grooves palette — 유일한 색 정의 지점 ===== */
-  --color-cream: #f5e3c8;
-  --color-ink: #2e2a26;
-  --color-rust: #e0602e;
-  --color-green: #3a5240;
-  --color-butter: #f0e8be;
-  --color-peach: #e9b48f;
+  /* ===== Grooves palette — 유일한 색 정의 지점 =====
+     Vintage Print: 아이보리 종이 + 네이비 잉크 단색.
+     UI는 이 두 계열만 사용하고, 웜톤(우드/주황/올리브/보라)은
+     3D scene 머티리얼 전용이라 Tailwind 토큰으로 노출하지 않는다. */
 
   /* Tailwind 기본 색상 비활성화 — 실수로 gray-500 같은 걸 못 쓰게 */
   --color-*: initial;
-  --color-cream: #f5e3c8;
-  --color-ink: #2e2a26;
-  --color-rust: #e0602e;
-  --color-green: #3a5240;
-  --color-butter: #f0e8be;
-  --color-peach: #e9b48f;
+
+  /* paper: 로딩 영상 배경(#F3EBD9)과 동일 — 프리로더 레터박스가 안 보이게 */
+  --color-paper: #f3ebd9;
+  --color-paper-light: #faf3e3;
+  --color-paper-deep: #eaddc2;
+
+  /* ink: 네이비 잉크 (선 · 타이포 · 버튼 전부 이 단색) */
+  --color-ink: #2b3a8c;
+  --color-ink-soft: rgba(43, 58, 140, 0.55);
+  --color-ink-faint: rgba(43, 58, 140, 0.18);
+
   --color-white: #ffffff;
   --color-transparent: transparent;
 
-  --color-cream-light: #faedd8;
-  --color-cream-deep: #ebd6b5;
+  /* ===== 폰트 — layout.tsx 의 next/font 변수와 연결 ===== */
+  --font-display: var(--font-anton); /* condensed 헤드라인 */
+  --font-mono: var(--font-space-mono); /* 타자기/카탈로그 메타데이터 */
+
+  /* ===== 모션 기본값: 0.8s easeOut ===== */
+  --ease-print: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
+  /* 완전 단색이 아니라 살짝 불균일한 종이 밑색 */
   background: radial-gradient(
     130% 100% at 50% 15%,
-    var(--color-cream-light) 0%,
-    var(--color-cream) 50%,
-    var(--color-cream-deep) 100%
+    var(--color-paper-light) 0%,
+    var(--color-paper) 50%,
+    var(--color-paper-deep) 100%
   );
   background-attachment: fixed;
   color: var(--color-ink);
+  font-family: var(--font-mono);
+  overflow-x: hidden;
 }
 
+/* ---------- 전역 종이 그레인 (layout 의 <div class="grain">) ----------
+   순수 fractalNoise 는 RGB 컬러 노이즈라 무지개 얼룩이 생겨서,
+   feColorMatrix 로 세피아 단색 + 낮은 알파로 눌러 종이결만 남긴다. */
 .grain {
   position: fixed;
   inset: 0;
   z-index: 50;
   pointer-events: none;
-  opacity: 0.25;
+  opacity: 0.5;
   mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.24 0 0 0 0 0.2 0 0 0 0 0.13 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* 하프톤 패턴 — 인쇄물 포인트용 (기존 유틸 유지) */
 @utility halftone {
   background-image: radial-gradient(currentColor 1px, transparent 1.5px);
   background-size: 10px 10px;
