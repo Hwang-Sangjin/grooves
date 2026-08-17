@@ -130,9 +130,10 @@ body {
    dashoffset 을 1 → 0 하나로 통일해 다룰 수 있다.
    ============================================================ */
 .groove {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: groove-draw 0.75s var(--ease-print) forwards;
+  /* len 만큼만 그리고 나머지는 열어둔다 — 손으로 그은 원처럼 안 닫히게 */
+  stroke-dasharray: var(--len, 1) 1;
+  stroke-dashoffset: var(--len, 1);
+  animation: groove-draw var(--dur, 0.75s) var(--ease-print) forwards;
   animation-delay: calc(0.15s + var(--i, 0) * 0.13s);
 }
 
@@ -159,5 +160,39 @@ body {
     animation: none;
     stroke-dashoffset: 0;
     opacity: 1;
+  }
+}
+
+/* 판 돌리기: spin-up(가속) → 정속 33⅓ RPM 으로 인계 */
+.disc-spinup,
+.disc-spin {
+  transform-box: view-box;
+  transform-origin: 200px 200px;
+}
+
+.disc-spinup {
+  animation: disc-spinup 1.2s cubic-bezier(0.55, 0, 1, 1) 0.15s forwards;
+}
+
+.disc-spin {
+  animation: disc-spin 1.8s linear 1.35s infinite;
+}
+
+@keyframes disc-spinup {
+  to {
+    transform: rotate(120deg);
+  }
+}
+
+@keyframes disc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disc-spinup,
+  .disc-spin {
+    animation: none;
   }
 }
