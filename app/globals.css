@@ -49,21 +49,115 @@ body {
   overflow-x: hidden;
 }
 
-/* ---------- 전역 종이 그레인 (layout 의 <div class="grain">) ----------
-   순수 fractalNoise 는 RGB 컬러 노이즈라 무지개 얼룩이 생겨서,
-   feColorMatrix 로 세피아 단색 + 낮은 알파로 눌러 종이결만 남긴다. */
+/* ============================================================
+   전역 종이 그레인 (layout 의 <div class="grain">)
+   - feTurbulence 노이즈를 feColorMatrix 로 세피아 단색화 (컬러 얼룩 제거)
+   - 강도 0.35 / 입자 1.0배(200px 타일) / 24fps 플리커
+   - 12프레임을 0.5s 에 steps(1) 로 끊어 재생 = 24fps
+   - 화면보다 크게 잡고 transform 으로 흔들어 GPU 합성 유지
+     (background-position 을 흔들면 매 프레임 전체 리페인트가 발생)
+   ============================================================ */
 .grain {
   position: fixed;
-  inset: 0;
+  top: -25%;
+  left: -25%;
+  width: 150%;
+  height: 150%;
   z-index: 50;
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.35;
   mix-blend-mode: multiply;
+  will-change: transform;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.24 0 0 0 0 0.2 0 0 0 0 0.13 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  animation: grain-flicker 0.5s steps(1) infinite;
 }
 
-/* 하프톤 패턴 — 인쇄물 포인트용 (기존 유틸 유지) */
+@keyframes grain-flicker {
+  0% {
+    transform: translate(0, 0);
+  }
+  8.33% {
+    transform: translate(-3%, -2%);
+  }
+  16.66% {
+    transform: translate(2%, -4%);
+  }
+  25% {
+    transform: translate(-4%, 3%);
+  }
+  33.33% {
+    transform: translate(3%, 1%);
+  }
+  41.66% {
+    transform: translate(-1%, -3%);
+  }
+  50% {
+    transform: translate(4%, 2%);
+  }
+  58.33% {
+    transform: translate(-2%, 4%);
+  }
+  66.66% {
+    transform: translate(1%, -1%);
+  }
+  75% {
+    transform: translate(-4%, -4%);
+  }
+  83.33% {
+    transform: translate(2%, 3%);
+  }
+  91.66% {
+    transform: translate(-3%, 1%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grain {
+    animation: none;
+  }
+}
+
+/* 하프톤 패턴 — 인쇄물 포인트용 */
 @utility halftone {
   background-image: radial-gradient(currentColor 1px, transparent 1.5px);
   background-size: 10px 10px;
+}
+
+/* ============================================================
+   PRELOADER — 바이닐 드로잉
+   pathLength="1" 로 정규화했기 때문에 반지름이 달라도
+   dashoffset 을 1 → 0 하나로 통일해 다룰 수 있다.
+   ============================================================ */
+.groove {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: groove-draw 0.75s var(--ease-print) forwards;
+  animation-delay: calc(0.15s + var(--i, 0) * 0.13s);
+}
+
+@keyframes groove-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.fade-in {
+  opacity: 0;
+  animation: fade-in 0.4s linear forwards;
+}
+
+@keyframes fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .groove,
+  .fade-in {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
 }
