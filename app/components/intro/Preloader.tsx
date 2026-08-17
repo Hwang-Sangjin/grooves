@@ -1,3 +1,8 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useAppReady } from "./useAppReady";
+
 // 바깥 → 안쪽 순서의 홈(groove) 반지름
 // r: 반지름 / rot: 시작점 각도 / len: 그려지는 비율(1이면 완전히 닫힘)
 // w: 선 굵기(필압) / o: 잉크 농도 / dur: 긋는 속도
@@ -13,7 +18,65 @@ const GROOVES = [
   { r: 54, rot: 60, len: 0.945, w: 2.2, o: 1, dur: 0.72 },
 ];
 
+const DRAW_MS = 2400; // 드로잉 choreography 가 끝나는 시점 (고정)
+
+const SLOWDOWN_MS = 1200; // globals.css 의 disc-slowdown 과 같은 길이
+
+const SLOWDOWN_DEG = 80; // disc-slowdown 이 추가로 도는 각도
+
+type Stage = "spinning" | "slowing" | "pulse";
+
 export default function Preloader() {
+  const spinRef = useRef<SVGGElement>(null);
+  const [stage, setStage] = useState<Stage>("spinning");
+  const [drawDone, setDrawDone] = useState(false);
+  const ready = useAppReady();
+
+  // 감속은 한 번 시작하면 되돌아가지 않는다.
+  // stage === "slowing" 으로 두면 다음 stage 에서 클래스가 벗겨지며
+  // 기본 무한회전이 0도부터 되살아난다.
+  const isSlowed = stage !== "spinning";
+
+  // 연출: 로딩 상황과 무관하게 항상 같은 리듬
+  useEffect(() => {
+    const t = setTimeout(() => setDrawDone(true), DRAW_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  // 대기: 드로잉이 끝났고 AND 리소스가 준비되면 감속 시작
+  useEffect(() => {
+    if (stage !== "spinning" || !drawDone || !ready) return;
+
+    const el = spinRef.current;
+    if (el) {
+      // 지금 판이 향한 각도를 읽어 감속 키프레임의 시작점으로 넘긴다.
+      // 이 값이 없으면 0도로 튀면서 판이 순간이동한다.
+      const m = new DOMMatrixReadOnly(getComputedStyle(el).transform);
+      const angle = (Math.atan2(m.b, m.a) * 180) / Math.PI;
+      el.style.setProperty("--from", `${angle}deg`);
+    }
+    setStage("slowing");
+  }, [stage, drawDone, ready]);
+
+  // 감속이 끝나면 pulse
+  useEffect(() => {
+    if (stage !== "slowing") return;
+
+    const t = setTimeout(() => {
+      // 멈춘 각도를 인라인으로 고정해둔다.
+      // CSS 애니메이션이 인라인 스타일보다 우선순위가 높아 재생 중엔 영향이 없고,
+      // 어떤 이유로든 클래스가 빠지면 이 값이 판을 붙잡아준다.
+      const el = spinRef.current;
+      if (el) {
+        const from = parseFloat(el.style.getPropertyValue("--from")) || 0;
+        el.style.transform = `rotate(${from + SLOWDOWN_DEG}deg)`;
+      }
+      setStage("pulse");
+    }, SLOWDOWN_MS);
+
+    return () => clearTimeout(t);
+  }, [stage]);
+
   return (
     <div
       className="fixed inset-0 z-40 grid place-items-center"
@@ -26,7 +89,11 @@ export default function Preloader() {
       />
 
       {/* 바이닐 디스크 */}
-      <div className="relative size-[300px]">
+      <div
+        className={`preloader-disc relative size-[300px]${
+          stage === "pulse" ? " is-pulse" : ""
+        }`}
+      >
         <svg
           viewBox="0 0 400 400"
           className="size-full overflow-visible"
@@ -34,8 +101,11 @@ export default function Preloader() {
         >
           {/* 바깥: 0 → 120도 가속 후 정지 유지 */}
           <g className="disc-spinup">
-            {/* 안쪽: 1.35s 부터 33⅓ RPM 정속으로 인계 */}
-            <g className="disc-spin">
+            {/* 안쪽: 1.35s 부터 33⅓ RPM 정속 → 준비되면 감속 정지 */}
+            <g
+              ref={spinRef}
+              className={`disc-spin${isSlowed ? " is-slowing" : ""}`}
+            >
               <g
                 fill="none"
                 stroke="currentColor"

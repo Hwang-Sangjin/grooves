@@ -196,3 +196,37 @@ body {
     animation: none;
   }
 }
+
+/* 감속 정지 — 현재 각도(--from)에서 이어받아 80도 더 돌고 멈춘다 */
+.disc-spin.is-slowing {
+  animation: disc-slowdown 1.2s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+}
+
+@keyframes disc-slowdown {
+  from {
+    transform: rotate(var(--from, 0deg));
+  }
+  to {
+    transform: rotate(calc(var(--from, 0deg) + 80deg));
+  }
+}
+
+/* 멈춘 판이 한 번 숨을 쉰다 — 수축(들이쉼) 후 팽창, 다시 제자리 */
+.preloader-disc.is-pulse {
+  animation: disc-pulse 0.85s ease-in-out forwards;
+}
+
+@keyframes disc-pulse {
+  0% {
+    transform: scale(1);
+  }
+  34% {
+    transform: scale(0.952);
+  }
+  72% {
+    transform: scale(1.038);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
