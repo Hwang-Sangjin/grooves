@@ -1,3 +1,14 @@
+"use client";
+
+import { useIntro } from "./components/intro/IntroProvider";
+import PrintGuides from "./components/layout/PrintGuides";
+
 export default function Home() {
-  return <main className="min-h-screen" />;
+  const { done } = useIntro();
+
+  return (
+    <main data-drawn={done} className="min-h-screen">
+      <PrintGuides />
+    </main>
+  );
 }

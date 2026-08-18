@@ -221,7 +221,7 @@ body {
 
 /* 스핀들은 선이 아니라 점이라 조용히 사그라든다 */
 .fade-in.is-erasing {
-  animation: fade-out 0.7s var(--ease-print) both;
+  animation: fade-out 0.35s var(--ease-print) both;
 }
 
 @keyframes fade-out {
@@ -235,7 +235,7 @@ body {
 
 /* 마지막으로 종이 판이 걷힌다 */
 .preloader-paper {
-  transition: opacity 0.9s var(--ease-print);
+  transition: opacity 0.5s var(--ease-print);
 }
 
 .preloader-paper.is-clearing {
@@ -259,5 +259,78 @@ body {
 
   .fade-in {
     opacity: 1;
+  }
+}
+
+:root {
+  /* ============================================================
+     가이드 라인 조절부
+     ============================================================ */
+
+  /* 화면 끝에서 선까지의 여백 — 상 / 좌 / 우 모두 이 값 하나를 쓴다.
+     단위를 하나로 통일해야 창 비율이 바뀌어도 상단과 좌우가 어긋나지 않는다.
+     min(vw, vh) 로 잡아 납작한 창에서는 세로 기준을 따라간다 */
+  --margin: clamp(56px, min(6.5vw, 13vh), 132px);
+
+  /* 두 선이 서로를 지나치는 길이 — 교차 마크도 정사각형이 된다 */
+  --overhang: calc(var(--margin) * 0.45);
+
+  /* 선 두께 */
+  --line-w: 3px;
+
+  /* 아래는 모두 파생 — 직접 만지지 않는다 */
+  --frame: var(--margin);
+  --header-h: var(--margin);
+  --line-inset: calc(var(--margin) - var(--overhang));
+  --line-top: calc(var(--margin) - var(--overhang));
+}
+
+/* ---------- 인쇄 가이드 라인 ----------
+   가로선은 세로선보다 바깥까지(--line-inset < --frame),
+   세로선은 가로선보다 위까지(--line-top < --header-h) 나간다.
+   서로를 지나치면서 생기는 교차 마크가 조판 가이드처럼 보이게 만든다. */
+.guide {
+  position: absolute;
+  background: var(--color-ink);
+
+  /* 1px/2px 선을 scale 로 늘린다 — width/height 애니메이션과 달리
+     레이아웃을 다시 계산하지 않아 GPU 에서 매끄럽게 처리된다 */
+  transition: transform 1s var(--ease-print);
+  transition-delay: calc(var(--d, 0) * 120ms);
+}
+
+.guide-h {
+  top: var(--header-h);
+  left: var(--line-inset);
+  right: var(--line-inset);
+  height: var(--line-w);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.guide-v {
+  top: var(--line-top);
+  bottom: 0;
+  width: var(--line-w);
+  transform: scaleY(0);
+  transform-origin: top center;
+}
+
+.guide-v--left {
+  left: var(--frame);
+}
+
+.guide-v--right {
+  right: var(--frame);
+}
+
+[data-drawn="true"] .guide {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide {
+    transition: none;
+    transform: none;
   }
 }

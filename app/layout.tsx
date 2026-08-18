@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Anton, Space_Mono } from "next/font/google";
 import "./globals.css";
 import Preloader from "./components/intro/Preloader";
+import { IntroProvider } from "./components/intro/IntroProvider";
 
 const anton = Anton({
   weight: "400",
@@ -30,8 +31,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body>
         <div aria-hidden className="grain" />
-        <Preloader />
-        {children}
+        <IntroProvider>
+          <Preloader />
+          {children}
+        </IntroProvider>
       </body>
     </html>
   );

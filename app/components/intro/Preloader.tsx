@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAppReady } from "./useAppReady";
+import { useIntro } from "./IntroProvider";
 
 // 바깥 → 안쪽 순서의 홈(groove) 반지름
 // r: 반지름 / rot: 시작점 각도 / len: 그려지는 비율(1이면 완전히 닫힘)
@@ -26,7 +27,7 @@ const SLOWDOWN_DEG = 80; // disc-slowdown 이 추가로 도는 각도
 
 const REST_MS = 400; // 멈춘 뒤 한 박자 — 없으면 지우기가 감속을 밀어낸다
 
-const ERASE_MS = 2100; // 마지막 홈(--i:10)이 다 지워질 때까지
+const ERASE_MS = 1800; // 2100 → 1800: 마지막 홈의 꼬리와 종이 걷힘을 겹친다
 
 const CLEAR_MS = 900; // 종이 판이 걷히는 시간
 
@@ -37,6 +38,7 @@ export default function Preloader() {
   const [stage, setStage] = useState<Stage>("spinning");
   const [drawDone, setDrawDone] = useState(false);
   const ready = useAppReady();
+  const { finish } = useIntro();
 
   // 한 번 켜진 상태 플래그는 다시 꺼지지 않는다.
   // 도중에 벗겨지면 기본 애니메이션이 0 부터 되살아나며 튄다.
@@ -91,6 +93,17 @@ export default function Preloader() {
     return () => clearTimeout(t);
   }, [stage]);
 
+  // 다 지워지면 종이를 걷으면서 동시에 홈이 선을 긋기 시작한다
+  useEffect(() => {
+    if (stage !== "erasing") return;
+    const t = setTimeout(() => {
+      setStage("clearing");
+      finish(); // 종이가 사라지는 0.5s 동안 선이 함께 그어진다
+    }, ERASE_MS);
+    return () => clearTimeout(t);
+  }, [stage, finish]);
+
+  // 종이가 걷히면 프리로더를 제거
   useEffect(() => {
     if (stage !== "clearing") return;
     const t = setTimeout(() => setStage("done"), CLEAR_MS);
@@ -173,7 +186,8 @@ export default function Preloader() {
                 cy="200"
                 r="5"
                 fill="currentColor"
-                style={{ animationDelay: "1.7s" }}
+                // 인라인 delay 는 클래스를 이기므로, 지우기 단계에선 반드시 0 으로 되돌린다
+                style={{ animationDelay: isErasing ? "0s" : "1s" }}
               />
             </g>
           </g>
