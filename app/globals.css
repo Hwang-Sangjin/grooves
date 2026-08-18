@@ -9,7 +9,7 @@
   /* Tailwind 기본 색상 비활성화 — 실수로 gray-500 같은 걸 못 쓰게 */
   --color-*: initial;
 
-  /* paper: 로딩 영상 배경(#F3EBD9)과 동일 — 프리로더 레터박스가 안 보이게 */
+  /* paper: 따뜻한 아이보리 종이 */
   --color-paper: #f3ebd9;
   --color-paper-light: #faf3e3;
   --color-paper-deep: #eaddc2;
@@ -127,11 +127,13 @@ body {
 /* ============================================================
    PRELOADER — 바이닐 드로잉
    pathLength="1" 로 정규화했기 때문에 반지름이 달라도
-   dashoffset 을 1 → 0 하나로 통일해 다룰 수 있다.
+   dashoffset 을 0~1 하나로 통일해 다룰 수 있다.
    ============================================================ */
 .groove {
-  /* len 만큼만 그리고 나머지는 열어둔다 — 손으로 그은 원처럼 안 닫히게 */
-  stroke-dasharray: var(--len, 1) 1;
+  /* len 만큼만 그리고 나머지는 열어둔다 — 손으로 그은 원처럼 안 닫히게.
+     갭이 2인 이유: 1이면 지우기가 끝날 때 대시 경계가 경로 양 끝에
+     정확히 걸려서, round 캡이 길이 0인 대시를 점으로 그려 남긴다 */
+  stroke-dasharray: var(--len, 1) 2;
   stroke-dashoffset: var(--len, 1);
   animation: groove-draw var(--dur, 0.75s) var(--ease-print) forwards;
   animation-delay: calc(0.15s + var(--i, 0) * 0.13s);
@@ -150,15 +152,6 @@ body {
 
 @keyframes fade-in {
   to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .groove,
-  .fade-in {
-    animation: none;
-    stroke-dashoffset: 0;
     opacity: 1;
   }
 }
@@ -190,13 +183,6 @@ body {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .disc-spinup,
-  .disc-spin {
-    animation: none;
-  }
-}
-
 /* 감속 정지 — 현재 각도(--from)에서 이어받아 80도 더 돌고 멈춘다 */
 .disc-spin.is-slowing {
   animation: disc-slowdown 1.2s cubic-bezier(0.33, 1, 0.68, 1) forwards;
@@ -211,22 +197,67 @@ body {
   }
 }
 
-/* 멈춘 판이 한 번 숨을 쉰다 — 수축(들이쉼) 후 팽창, 다시 제자리 */
-.preloader-disc.is-pulse {
-  animation: disc-pulse 0.85s ease-in-out forwards;
+/* ---------- 지우기: 그려진 방향 그대로 선이 빠져나간다 ----------
+   dashoffset 을 음수로 보내면 대시가 경로를 따라 계속 전진하며
+   꼬리부터 사라진다. (양수면 그리던 것을 되감는 "undo")
+
+   from 을 명시하는 이유: 애니메이션이 교체되는 순간 유지되던 0 이
+   풀리고 선언값(안 그려진 상태)이 시작점이 되어 원을 다시 그린다.
+   both 는 stagger 지연 동안에도 from(0) 을 붙잡아 깜빡임을 막는다. */
+.groove.is-erasing {
+  animation: groove-erase var(--edur, 1.1s) var(--ease-print) both;
+  animation-delay: calc(var(--i, 0) * 0.09s);
 }
 
-@keyframes disc-pulse {
-  0% {
-    transform: scale(1);
+@keyframes groove-erase {
+  from {
+    stroke-dashoffset: 0;
   }
-  34% {
-    transform: scale(0.952);
+  to {
+    /* -1 은 경계가 끝점에 딱 걸린다. 여유를 줘서 완전히 통과시킨다 */
+    stroke-dashoffset: -1.1;
   }
-  72% {
-    transform: scale(1.038);
+}
+
+/* 스핀들은 선이 아니라 점이라 조용히 사그라든다 */
+.fade-in.is-erasing {
+  animation: fade-out 0.7s var(--ease-print) both;
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
   }
-  100% {
-    transform: scale(1);
+  to {
+    opacity: 0;
+  }
+}
+
+/* 마지막으로 종이 판이 걷힌다 */
+.preloader-paper {
+  transition: opacity 0.9s var(--ease-print);
+}
+
+.preloader-paper.is-clearing {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .groove,
+  .groove.is-erasing,
+  .fade-in,
+  .fade-in.is-erasing,
+  .disc-spinup,
+  .disc-spin,
+  .disc-spin.is-slowing {
+    animation: none;
+  }
+
+  .groove {
+    stroke-dashoffset: 0;
+  }
+
+  .fade-in {
+    opacity: 1;
   }
 }

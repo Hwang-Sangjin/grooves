@@ -24,7 +24,13 @@ const SLOWDOWN_MS = 1200; // globals.css 의 disc-slowdown 과 같은 길이
 
 const SLOWDOWN_DEG = 80; // disc-slowdown 이 추가로 도는 각도
 
-type Stage = "spinning" | "slowing" | "pulse";
+const REST_MS = 400; // 멈춘 뒤 한 박자 — 없으면 지우기가 감속을 밀어낸다
+
+const ERASE_MS = 2100; // 마지막 홈(--i:10)이 다 지워질 때까지
+
+const CLEAR_MS = 900; // 종이 판이 걷히는 시간
+
+type Stage = "spinning" | "slowing" | "erasing" | "clearing" | "done";
 
 export default function Preloader() {
   const spinRef = useRef<SVGGElement>(null);
@@ -32,10 +38,11 @@ export default function Preloader() {
   const [drawDone, setDrawDone] = useState(false);
   const ready = useAppReady();
 
-  // 감속은 한 번 시작하면 되돌아가지 않는다.
-  // stage === "slowing" 으로 두면 다음 stage 에서 클래스가 벗겨지며
-  // 기본 무한회전이 0도부터 되살아난다.
+  // 한 번 켜진 상태 플래그는 다시 꺼지지 않는다.
+  // 도중에 벗겨지면 기본 애니메이션이 0 부터 되살아나며 튄다.
   const isSlowed = stage !== "spinning";
+  const isErasing =
+    stage === "erasing" || stage === "clearing" || stage === "done";
 
   // 연출: 로딩 상황과 무관하게 항상 같은 리듬
   useEffect(() => {
@@ -58,7 +65,7 @@ export default function Preloader() {
     setStage("slowing");
   }, [stage, drawDone, ready]);
 
-  // 감속이 끝나면 pulse
+  // 멈춘 뒤 한 박자 쉬고 지우기 시작
   useEffect(() => {
     if (stage !== "slowing") return;
 
@@ -71,11 +78,26 @@ export default function Preloader() {
         const from = parseFloat(el.style.getPropertyValue("--from")) || 0;
         el.style.transform = `rotate(${from + SLOWDOWN_DEG}deg)`;
       }
-      setStage("pulse");
-    }, SLOWDOWN_MS);
+      setStage("erasing");
+    }, SLOWDOWN_MS + REST_MS);
 
     return () => clearTimeout(t);
   }, [stage]);
+
+  // 다 지워지면 종이를 걷는다
+  useEffect(() => {
+    if (stage !== "erasing") return;
+    const t = setTimeout(() => setStage("clearing"), ERASE_MS);
+    return () => clearTimeout(t);
+  }, [stage]);
+
+  useEffect(() => {
+    if (stage !== "clearing") return;
+    const t = setTimeout(() => setStage("done"), CLEAR_MS);
+    return () => clearTimeout(t);
+  }, [stage]);
+
+  if (stage === "done") return null;
 
   return (
     <div
@@ -85,15 +107,13 @@ export default function Preloader() {
     >
       <div
         aria-hidden
-        className="absolute inset-0 bg-[radial-gradient(130%_100%_at_50%_15%,var(--color-paper-light)_0%,var(--color-paper)_50%,var(--color-paper-deep)_100%)]"
+        className={`preloader-paper absolute inset-0 bg-[radial-gradient(130%_100%_at_50%_15%,var(--color-paper-light)_0%,var(--color-paper)_50%,var(--color-paper-deep)_100%)]${
+          stage === "clearing" ? " is-clearing" : ""
+        }`}
       />
 
       {/* 바이닐 디스크 */}
-      <div
-        className={`preloader-disc relative size-[300px]${
-          stage === "pulse" ? " is-pulse" : ""
-        }`}
-      >
+      <div className="relative size-[300px]">
         <svg
           viewBox="0 0 400 400"
           className="size-full overflow-visible"
@@ -116,7 +136,7 @@ export default function Preloader() {
                 {GROOVES.map((g, i) => (
                   <circle
                     key={g.r}
-                    className="groove"
+                    className={`groove${isErasing ? " is-erasing" : ""}`}
                     cx="200"
                     cy="200"
                     r={g.r}
@@ -136,7 +156,7 @@ export default function Preloader() {
 
                 {/* 라벨 — 홈이 다 그려질 즈음 */}
                 <circle
-                  className="groove"
+                  className={`groove${isErasing ? " is-erasing" : ""}`}
                   cx="200"
                   cy="200"
                   r="34"
@@ -148,7 +168,7 @@ export default function Preloader() {
 
               {/* 스핀들 */}
               <circle
-                className="fade-in"
+                className={`fade-in${isErasing ? " is-erasing" : ""}`}
                 cx="200"
                 cy="200"
                 r="5"
