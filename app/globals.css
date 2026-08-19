@@ -9,10 +9,11 @@
   /* Tailwind 기본 색상 비활성화 — 실수로 gray-500 같은 걸 못 쓰게 */
   --color-*: initial;
 
-  /* paper: 따뜻한 아이보리 종이 */
-  --color-paper: #f3ebd9;
-  --color-paper-light: #faf3e3;
-  --color-paper-deep: #eaddc2;
+  /* paper: 레퍼런스 일러스트의 종이색(#F3E4D0)에 맞춘 살구빛 크림.
+     그레인이 multiply 로 약 11 어둡게 만들기 때문에 토큰은 그만큼 밝게 잡는다 */
+  --color-paper: #fceedb;
+  --color-paper-light: #fff6e5;
+  --color-paper-deep: #f3e0c4;
 
   /* ink: 네이비 잉크 (선 · 타이포 · 버튼 전부 이 단색) */
   --color-ink: #2b3a8c;
@@ -28,6 +29,42 @@
 
   /* ===== 모션 기본값: 0.8s easeOut ===== */
   --ease-print: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ============================================================
+   레이아웃 조절부 — 가이드 라인 · 헤더가 모두 여기서 파생된다
+   ============================================================ */
+:root {
+  /* 화면 끝에서 선까지의 여백 — 상 / 좌 / 우 모두 이 값 하나를 쓴다.
+     단위를 하나로 통일해야 창 비율이 바뀌어도 상단과 좌우가 어긋나지 않는다.
+     min(vw, vh) 로 잡아 납작한 창에서는 세로 기준을 따라간다.
+     로고를 더 키우려면 13vh / 132px 를 올린다 (프레임 전체가 커진다) */
+  --margin: clamp(56px, min(6.5vw, 13vh), 132px);
+
+  /* 두 선이 서로를 지나치는 길이 — 교차 마크도 정사각형이 된다 */
+  --overhang: calc(var(--margin) * 0.45);
+
+  /* 선 두께 */
+  --line-w: 3px;
+
+  /* 선이 그어지기 시작한 뒤 요소들이 등장하기까지 */
+  --enter: 620ms;
+
+  /* 헤더 좌우 여백 — 세로선보다 더 안쪽으로 들여 선 안에 담기게 */
+  --header-px: calc(var(--margin) + var(--overhang) * 1.2);
+
+  /* 헤더를 아래로 — 키울수록 로고가 쓸 수 있는 높이가 줄어든다 */
+  --header-pt: calc(var(--overhang) * 0.3);
+
+  /* 헤더 로고 높이 — 헤더 높이에서 --header-pt 를 뺀 공간이 상한이다.
+     0.6 ~ 0.78 사이에서 조절. 넘기면 로고가 가로선을 침범한다 */
+  --logo-h: calc(var(--margin) * 0.7);
+
+  /* 아래는 모두 파생 — 직접 만지지 않는다 */
+  --frame: var(--margin);
+  --header-h: var(--margin);
+  --line-inset: calc(var(--margin) - var(--overhang));
+  --line-top: calc(var(--margin) - var(--overhang));
 }
 
 html,
@@ -109,12 +146,6 @@ body {
   }
   91.66% {
     transform: translate(-3%, 1%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .grain {
-    animation: none;
   }
 }
 
@@ -242,61 +273,22 @@ body {
   opacity: 0;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .groove,
-  .groove.is-erasing,
-  .fade-in,
-  .fade-in.is-erasing,
-  .disc-spinup,
-  .disc-spin,
-  .disc-spin.is-slowing {
-    animation: none;
-  }
-
-  .groove {
-    stroke-dashoffset: 0;
-  }
-
-  .fade-in {
-    opacity: 1;
-  }
-}
-
-:root {
-  /* ============================================================
-     가이드 라인 조절부
-     ============================================================ */
-
-  /* 화면 끝에서 선까지의 여백 — 상 / 좌 / 우 모두 이 값 하나를 쓴다.
-     단위를 하나로 통일해야 창 비율이 바뀌어도 상단과 좌우가 어긋나지 않는다.
-     min(vw, vh) 로 잡아 납작한 창에서는 세로 기준을 따라간다 */
-  --margin: clamp(56px, min(6.5vw, 13vh), 132px);
-
-  /* 두 선이 서로를 지나치는 길이 — 교차 마크도 정사각형이 된다 */
-  --overhang: calc(var(--margin) * 0.45);
-
-  /* 선 두께 */
-  --line-w: 3px;
-
-  /* 아래는 모두 파생 — 직접 만지지 않는다 */
-  --frame: var(--margin);
-  --header-h: var(--margin);
-  --line-inset: calc(var(--margin) - var(--overhang));
-  --line-top: calc(var(--margin) - var(--overhang));
-}
-
-/* ---------- 인쇄 가이드 라인 ----------
+/* ============================================================
+   인쇄 가이드 라인 — 전 페이지 공통
    가로선은 세로선보다 바깥까지(--line-inset < --frame),
    세로선은 가로선보다 위까지(--line-top < --header-h) 나간다.
-   서로를 지나치면서 생기는 교차 마크가 조판 가이드처럼 보이게 만든다. */
+   서로를 지나치면서 생기는 교차 마크가 조판 가이드처럼 보이게 만든다.
+   ============================================================ */
 .guide {
   position: absolute;
+  /* opacity 로 흐리게 하면 두 선이 겹치는 교차점에서 알파가 누적돼
+     더 진한 사각형이 생긴다. 색 자체에 알파를 넣으면 겹쳐도 균일하다 */
   background: var(--color-ink);
 
-  /* 1px/2px 선을 scale 로 늘린다 — width/height 애니메이션과 달리
+  /* 선을 scale 로 늘린다 — width/height 애니메이션과 달리
      레이아웃을 다시 계산하지 않아 GPU 에서 매끄럽게 처리된다 */
   transition: transform 1s var(--ease-print);
-  transition-delay: calc(var(--d, 0) * 120ms);
+  transition-delay: calc(var(--d, 0) * 50ms);
 }
 
 .guide-h {
@@ -328,9 +320,96 @@ body {
   transform: none;
 }
 
+/* ============================================================
+   공통 등장 연출 — 선이 그어진 뒤 요소들이 순서대로 올라온다
+   --d 인덱스로 순서만 정하면 된다
+   ============================================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.9s var(--ease-print),
+    transform 0.9s var(--ease-print);
+  transition-delay: calc(var(--enter) + var(--d, 0) * 70ms);
+}
+
+[data-drawn="true"] .reveal {
+  opacity: 1;
+  transform: none;
+}
+
+/* 메뉴 막대 — 페이드가 아니라 선처럼 그어진다 */
+.menu-bar {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.7s var(--ease-print);
+  transition-delay: calc(var(--enter) + var(--d, 0) * 70ms);
+}
+
+[data-drawn="true"] .menu-bar {
+  transform: none;
+}
+
+/* 로고 — 호버하면 아주 살짝 밝아진다 */
+.logo-mark {
+  transition: opacity 0.5s var(--ease-print);
+}
+
+.group:hover .logo-mark {
+  opacity: 0.68;
+}
+
+/* ============================================================
+   접근성 — 모션 최소화
+   ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  .guide {
+  .grain,
+  .groove,
+  .groove.is-erasing,
+  .fade-in,
+  .fade-in.is-erasing,
+  .disc-spinup,
+  .disc-spin,
+  .disc-spin.is-slowing {
+    animation: none;
+  }
+
+  .groove {
+    stroke-dashoffset: 0;
+  }
+
+  .fade-in {
+    opacity: 1;
+  }
+
+  .guide,
+  .reveal,
+  .menu-bar,
+  .logo-mark {
     transition: none;
     transform: none;
+    opacity: 1;
+  }
+}
+
+/* 3D 씬 — 선이 그어진 뒤 조용히 떠오른다 */
+.scene-frame {
+  opacity: 0;
+  pointer-events: none;
+  /* 씬은 웜톤 그대로 렌더되고, 여기서 잉크 단색으로 변환된다 */
+  filter: url(#ink-duotone);
+  transition: opacity 1.4s var(--ease-print);
+  transition-delay: var(--enter);
+}
+
+[data-drawn="true"] .scene-frame {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-frame {
+    transition: none;
+    opacity: 1;
   }
 }
