@@ -397,7 +397,7 @@ body {
   opacity: 0;
   pointer-events: none;
   /* 씬은 웜톤 그대로 렌더되고, 여기서 잉크 단색으로 변환된다 */
-  filter: url(#ink-duotone);
+
   transition: opacity 1.4s var(--ease-print);
   transition-delay: var(--enter);
 }
